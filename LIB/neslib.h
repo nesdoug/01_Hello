@@ -1,6 +1,6 @@
 //NES hardware-dependent functions by Shiru (shiru@mail.ru)
 //Feel free to do anything you want with this code, consider it Public Domain
-//nesdoug version, minor changes %
+//nesdoug version, minor changes %%
 
 //Versions history:
 // 050517 - pad polling code optimized, button bits order reversed
@@ -159,7 +159,7 @@ void __fastcall__ scroll(unsigned int x,unsigned int y);
 //         otherwise empty frames without split will be inserted, resulting in jumpy screen
 //warning: only X scroll could be changed in this version
 
-void __fastcall__ split(unsigned int x); //removed y, not used %
+void __fastcall__ split(unsigned int x); //removed y, not used %%
 
 
 //select current chr bank for sprites, 0..1
@@ -200,14 +200,14 @@ void __fastcall__ set_rand(unsigned int seed);
 //length of this data should be under 256 bytes
 
 void __fastcall__ set_vram_update(const unsigned char *buf);
-//% changed, added "const"
+//%% changed, added "const"
 
 //all following vram functions only work when display is disabled
 
 //do a series of VRAM writes, the same format as for set_vram_update, but writes done right away
 
 void __fastcall__ flush_vram_update(const unsigned char *buf);
-//% changed, added "const"
+//%% changed, added "const"
 
 //set vram pointer to write operations if you need to write some data to vram
 
@@ -232,7 +232,7 @@ void __fastcall__ vram_read(unsigned char *dst,unsigned int size);
 //write a block to current address of vram, works only when rendering is turned off
 
 void __fastcall__ vram_write(const unsigned char *src,unsigned int size);
-//% changed, added "const"
+//%% changed, added "const"
 
 //unpack RLE data to current address of vram, mostly used for nametables
 

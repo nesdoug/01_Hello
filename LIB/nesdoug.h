@@ -1,5 +1,5 @@
 //Written by Doug Fraker 2018
-// v 1.0
+// v 1.01
 
 // Why am I doing so much with a vram_buffer? This is an automated system, which
 // works when the screen is on. You can write to the buffer at any time. 
@@ -10,8 +10,12 @@
 
 
 void set_vram_buffer(void);
-// sets the vram update to point to the vram_buffer
+// sets the vram update to point to the vram_buffer. VRAM_BUF defined in crt0.s
 // this can be undone by set_vram_update(NULL)
+
+
+void __fastcall__ one_vram_buffer(unsigned char data, int ppu_address);
+// to push a single byte write to the vram_buffer
 
 
 void __fastcall__ multi_vram_buffer_horz(const char * data, unsigned char len, int ppu_address);
@@ -20,10 +24,6 @@ void __fastcall__ multi_vram_buffer_horz(const char * data, unsigned char len, i
 
 void __fastcall__ multi_vram_buffer_vert(const char * data, unsigned char len, int ppu_address);
 // to push multiple writes as one sequential vertical write to the vram_buffer
-
-
-void __fastcall__ one_vram_buffer(unsigned char data, int ppu_address);
-// to push a single byte write to the vram_buffer
 
 
 void clear_vram_buffer(void);
@@ -45,16 +45,17 @@ void __fastcall__ set_music_speed(unsigned char tempo);
 // default is 6
 // music_play also sets the tempo, and any Fxx effect in the song will too
 // you will probably have to repeatedly set_music_speed() every frame
+// music_stop() and music_pause() also overwrite this value
 
 
 unsigned char __fastcall__ check_collision(void * object1, void * object2);
 // expects an object (struct) where the first 4 bytes are X, Y, width, height
-// may have to cast the address of the struct as a (char *)
-// this has the flexibility to handle different kinds of structs
+// you will probably have to pass the address of the object like &object
+// the struct can be bigger than 4 bytes, as long as the first 4 bytes are X, Y, width, height
 
 
 void __fastcall__ pal_fade_to(unsigned char from, unsigned char to);
-// from Shiru's "Chase" game code
+// adapted from Shiru's "Chase" game code
 // values must be 0-8, 0 = all black, 8 = all white, 4 = normal
 
 
@@ -89,42 +90,46 @@ int __fastcall__ get_at_addr(char nt, char x, char y);
 // x is screen pixels 0-255, y is screen pixels 0-239, nt is nametable 0-3
 
 
+// the next 4 functions are for my metatile system, as described in my tutorial
+// nesdoug.com
+
+
 void __fastcall__ set_data_pointer(const char * data);
 // for the metatile system, pass it the addresses of the room data
-// room should be exactly 240 bytes (16x15)
+// room data should be exactly 240 bytes (16x15)
+// each byte represents a 16x16 px block of the screen
 
 
 void __fastcall__ set_mt_pointer(const char * metatiles);
 // for the metatile system, pass it the addresses of the metatile data
+// a metatile is a 16x16 px block
 // metatiles is variable length, 5 bytes per metatile...
-// TopL, TopR, BottomL, BottomR), then 1 byte of palette, 0-3...
-
-
-void __fastcall__ buffer_4_mt(int ppu_address, char index);
-// will push 4 metatiles and 1 attribute byte to the vram_buffer
-// make sure to set_vram_buffer(), and clear_vram_buffer(), 
-// set_data_pointer and set_mt_pointer() 
-// before using this...clear it every frame before pushing anything to it.
-// use get_ppu_addr() to get the ppu_address
-// index is which room byte (TL) to convert to tiles
-// use index = (y & 0xf0) + (x >> 4); where x 0-255 and y 0-239; to get the index
-// index should be 0-239, like the room data it represents
+// TopL, TopR, BottomL, BottomR, then 1 byte of palette 0-3
+// max metatiles = 51 (because 51 x 5 = 255)
 
 
 void __fastcall__ buffer_1_mt(int ppu_address, char metatile);
 // will push 1 metatile and 0 attribute bytes to the vram_buffer
 // make sure to set_vram_buffer(), and clear_vram_buffer(), 
-// set_data_pointer and set_mt_pointer() 
-// before using this.
-// set_mt_pointers requires a pointer to data, buffer_1_mt doesn't use it, so...
-// it's value is irrelevant and can be anything
-// use this when you want to change an existing BG metatile
+// and set_mt_pointer() 
+// "metatile" should be 0-50, like the metatile data
+
+
+void __fastcall__ buffer_4_mt(int ppu_address, char index);
+// will push 4 metatiles (2x2 box) and 1 attribute byte to the vram_buffer
+// this affects a 32x32 px area of the screen, and pushes 17 bytes to the vram_buffer.
+// make sure to set_vram_buffer(), and clear_vram_buffer(), 
+// set_data_pointer(), and set_mt_pointer() 
+// "index" is which starting byte in the room data, to convert to tiles.
+// use index = (y & 0xf0) + (x >> 4); where x 0-255 and y 0-239;
+// index should be 0-239, like the room data it represents
 
 
 void flush_vram_update_nmi(void);
 // same as flush_vram_update, but assumes that a pointer to the vram has been set already
 // this is for when the screen is OFF, but you still want to write to the PPU
 // with the vram_buffer system
+// "nmi" is a misnomer. this doesn't have to happen during nmi.
 
 
 void __fastcall__ color_emphasis(char color);
@@ -142,15 +147,6 @@ void __fastcall__ xy_split(unsigned int x, unsigned int y);
 // requires a sprite zero hit, or will crash
 
 
-char get_carry(void);
-// return 0 or 1, the value of the carry flag (carry flag is reset also)
-// for high and low bytes added separately (perhaps because they are stored separately)
-// use...
-// a = a + b; // low bytes, added and put in a
-// carry = get_carry(); // carry now equals 0 or 1, if a + b > 255
-// d = d + carry; // add it to a high byte
-
-
 void gray_line(void);
 // For debugging. Insert at the end of the game loop, to see how much frame is left.
 // Will print a gray line on the screen. Distance to the bottom = how much is left.
@@ -164,11 +160,11 @@ void gray_line(void);
 #define POKE(addr,val)     (*(unsigned char*) (addr) = (val))
 #define PEEK(addr)         (*(unsigned char*) (addr))
 // examples
-// POKE(0xD800, 0x12); //stores 0x12 at address 0xd800, useful for hardware registers
-// B = PEEK(0xD800); //read a value from address 0xd800, into B, which should be a char
+// POKE(0xD800, 0x12); // stores 0x12 at address 0xd800, useful for hardware registers
+// B = PEEK(0xD800); // read a value from address 0xd800, into B, which should be a char
 
 
 void seed_rng(void);
-// get from the frame count, should use a button (start on title screen) to trigger
+// get from the frame count. You can use a button (start on title screen) to trigger
 
 

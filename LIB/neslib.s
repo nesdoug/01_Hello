@@ -1,7 +1,7 @@
 ;NES hardware-dependent functions by Shiru (shiru@mail.ru)
 ;with improvements by VEG
 ;Feel free to do anything you want with this code, consider it Public Domain
-;nesdoug version, minor changes %
+;nesdoug version, minor change %%, added ldx #0 to functions returning char
 
 ;v050517
 
@@ -327,6 +327,7 @@ _ppu_mask:
 _ppu_system:
 
 	lda <NTSC_MODE
+	ldx #0
 	rts
 
 
@@ -399,6 +400,7 @@ _oam_spr:
 	txa
 	clc
 	adc #4
+	ldx #0
 	rts
 
 
@@ -457,6 +459,7 @@ _oam_meta_spr:
 @3:
 
 	txa
+	ldx #0
 	rts
 
 
@@ -620,7 +623,7 @@ _scroll:
 
 
 ;;void __fastcall__ split(unsigned int x);
-;minor changes %
+;minor changes %%
 _split:
 
 ;	jsr popax
@@ -862,7 +865,8 @@ _pad_poll:
 	sta <PAD_STATET,y
 	txa
 	sta <PAD_STATEP,y
-
+	
+	ldx #0
 	rts
 
 
@@ -876,6 +880,7 @@ _pad_trigger:
 	pla
 	tax
 	lda <PAD_STATET,x
+	ldx #0
 	rts
 
 
@@ -886,6 +891,7 @@ _pad_state:
 
 	tax
 	lda <PAD_STATE,x
+	ldx #0
 	rts
 
 
@@ -923,7 +929,7 @@ _rand8:
 	jsr rand1
 	jsr rand2
 	adc <RAND_SEED
-	ldx #$00 ;minor change %
+	ldx #0
 	rts
 
 
