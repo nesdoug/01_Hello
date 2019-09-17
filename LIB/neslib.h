@@ -1,6 +1,8 @@
 //NES hardware-dependent functions by Shiru (shiru@mail.ru)
 //Feel free to do anything you want with this code, consider it Public Domain
-//nesdoug version, minor changes %%
+
+// nesdoug version, 2019-09
+// changes, removed sprid from oam functions, oam_spr 11% faster, meta 5% faster
 
 //Versions history:
 // 050517 - pad polling code optimized, button bits order reversed
@@ -85,8 +87,9 @@ unsigned char __fastcall__ ppu_system(void);
 
 
 //clear OAM buffer, all the sprites are hidden
-
+// Note: changed. Now also changes sprid (index to buffer) to zero
 void __fastcall__ oam_clear(void);
+
 
 //set sprite display mode, 0 for 8x8 sprites, 1 for 8x16 sprites
 
@@ -94,20 +97,36 @@ void __fastcall__ oam_size(unsigned char size);
 
 //set sprite in OAM buffer, chrnum is tile, attr is attribute, sprid is offset in OAM in bytes
 //returns sprid+4, which is offset for a next sprite
+// Note: sprid removed for speed
+void __fastcall__ oam_spr(unsigned char x,unsigned char y,unsigned char chrnum,unsigned char attr);
 
-unsigned char __fastcall__ oam_spr(unsigned char x,unsigned char y,unsigned char chrnum,unsigned char attr,unsigned char sprid);
+
 
 //set metasprite in OAM buffer
 //meta sprite is a const unsigned char array, it contains four bytes per sprite
 //in order x offset, y offset, tile, attribute
 //x=128 is end of a meta sprite
 //returns sprid+4, which is offset for a next sprite
+// Note: sprid removed for speed
+void __fastcall__ oam_meta_spr(unsigned char x,unsigned char y,const unsigned char *data);
 
-unsigned char __fastcall__ oam_meta_spr(unsigned char x,unsigned char y,unsigned char sprid,const unsigned char *data);
 
 //hide all remaining sprites from given offset
+// Note: sprid removed for speed
+// Now also changes sprid (index to buffer) to zero
+void __fastcall__ oam_hide_rest(void);
 
-void __fastcall__ oam_hide_rest(unsigned char sprid);
+
+// to manually change the sprid (index to sprite buffer)
+// perhaps as part of a sprite shuffling algorithm
+// Note: this should be a multiple of 4 (0,4,8,12,etc.)
+
+void __fastcall__ oam_set(unsigned char index);
+
+// returns the sprid (index to the sprite buffer)
+
+unsigned char __fastcall__ oam_get(void);
+
 
 
 

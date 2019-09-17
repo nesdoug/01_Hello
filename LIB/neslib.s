@@ -1,9 +1,11 @@
 ;NES hardware-dependent functions by Shiru (shiru@mail.ru)
 ;with improvements by VEG
 ;Feel free to do anything you want with this code, consider it Public Domain
-;nesdoug version, minor change %%, added ldx #0 to functions returning char
 
-;v050517
+;nesdoug version, 2019-09
+;minor change %%, added ldx #0 to functions returning char
+;removed sprid from c functions to speed them up
+
 
 
 
@@ -23,7 +25,7 @@
 	.export _set_vram_update,_flush_vram_update
 	.export _memcpy,_memfill,_delay
 	
-	.export _flush_vram_update_nmi
+	.export _flush_vram_update_nmi, _oam_set, _oam_get
 
 
 
@@ -337,6 +339,7 @@ _ppu_system:
 _oam_clear:
 
 	ldx #0
+	stx SPRID ; automatically sets sprid to zero
 	lda #$ff
 @1:
 	sta OAM_BUF,x
@@ -346,6 +349,26 @@ _oam_clear:
 	inx
 	bne @1
 	rts
+	
+	
+;void __fastcall__ oam_set(unsigned char index);	
+;to manually set the position
+;a = sprid
+
+_oam_set:
+	and #$fc ;strip those low 2 bits, just in case
+	sta SPRID
+	rts
+	
+	
+;unsigned char __fastcall__ oam_get(void);	
+;returns the sprid
+
+_oam_get:
+	lda SPRID
+	ldx #0
+	rts
+	
 
 
 
@@ -369,16 +392,16 @@ _oam_size:
 
 
 
-;unsigned char __fastcall__ oam_spr(unsigned char x,unsigned char y,unsigned char chrnum,unsigned char attr,unsigned char sprid);
+;void __fastcall__ oam_spr(unsigned char x,unsigned char y,unsigned char chrnum,unsigned char attr);
+;sprid removed
 
 _oam_spr:
 
-	tax
-
-	ldy #0		;four popa calls replacement
-	lda (sp),y
-	iny
+	ldx SPRID
+	;a = chrnum
 	sta OAM_BUF+2,x
+
+	ldy #0		;3 popa calls replacement
 	lda (sp),y
 	iny
 	sta OAM_BUF+1,x
@@ -390,7 +413,7 @@ _oam_spr:
 
 	lda <sp
 	clc
-	adc #4
+	adc #3 ;4
 	sta <sp
 	bcc @1
 	inc <sp+1
@@ -400,27 +423,27 @@ _oam_spr:
 	txa
 	clc
 	adc #4
-	ldx #0
+	sta SPRID
 	rts
 
 
 
-;unsigned char __fastcall__ oam_meta_spr(unsigned char x,unsigned char y,unsigned char sprid,const unsigned char *data);
+;void __fastcall__ oam_meta_spr(unsigned char x,unsigned char y,const unsigned char *data);
+;sprid removed
 
 _oam_meta_spr:
 
 	sta <PTR
 	stx <PTR+1
 
-	ldy #2		;three popa calls replacement, performed in reversed order
+	ldy #1		;2 popa calls replacement, performed in reversed order
 	lda (sp),y
 	dey
 	sta <SCRX
 	lda (sp),y
-	dey
 	sta <SCRY
-	lda (sp),y
-	tax
+	
+	ldx SPRID
 
 @1:
 
@@ -451,24 +474,24 @@ _oam_meta_spr:
 @2:
 
 	lda <sp
-	adc #2			;carry is always set here, so it adds 3
+	adc #1 ;2			;carry is always set here, so it adds 3
 	sta <sp
 	bcc @3
 	inc <sp+1
 
 @3:
 
-	txa
-	ldx #0
+	stx SPRID
 	rts
 
 
 
-;void __fastcall__ oam_hide_rest(unsigned char sprid);
+;void __fastcall__ oam_hide_rest(void);
+;sprid removed
 
 _oam_hide_rest:
 
-	tax
+	ldx SPRID
 	lda #240
 
 @1:
@@ -479,6 +502,8 @@ _oam_hide_rest:
 	inx
 	inx
 	bne @1
+	;x is zero
+	stx SPRID
 	rts
 
 

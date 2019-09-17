@@ -84,6 +84,7 @@ RAND_SEED: 			.res 2
 FT_TEMP: 			.res 3
 
 TEMP: 				.res 11
+SPRID:				.res 1
 
 PAD_BUF		=TEMP+1
 
