@@ -88,6 +88,7 @@ unsigned char __fastcall__ ppu_system(void);
 
 //clear OAM buffer, all the sprites are hidden
 // Note: changed. Now also changes sprid (index to buffer) to zero
+
 void __fastcall__ oam_clear(void);
 
 
@@ -95,9 +96,9 @@ void __fastcall__ oam_clear(void);
 
 void __fastcall__ oam_size(unsigned char size);
 
-//set sprite in OAM buffer, chrnum is tile, attr is attribute, sprid is offset in OAM in bytes
-//returns sprid+4, which is offset for a next sprite
+//set sprite in OAM buffer, chrnum is tile, attr is attribute
 // Note: sprid removed for speed
+
 void __fastcall__ oam_spr(unsigned char x,unsigned char y,unsigned char chrnum,unsigned char attr);
 
 
@@ -106,8 +107,8 @@ void __fastcall__ oam_spr(unsigned char x,unsigned char y,unsigned char chrnum,u
 //meta sprite is a const unsigned char array, it contains four bytes per sprite
 //in order x offset, y offset, tile, attribute
 //x=128 is end of a meta sprite
-//returns sprid+4, which is offset for a next sprite
 // Note: sprid removed for speed
+
 void __fastcall__ oam_meta_spr(unsigned char x,unsigned char y,const unsigned char *data);
 
 
