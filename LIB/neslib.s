@@ -2,10 +2,13 @@
 ;with improvements by VEG
 ;Feel free to do anything you want with this code, consider it Public Domain
 
-;nesdoug version, 2019-09
+;for nesdoug version 1.2, 1/1/2022
+;changed nmi to prevent possible incomplete sprite
+;added a little bit at the end of _flush_vram_update
+;changed the name of flush_vram_update_nmi to flush_vram_update2
+
 ;minor change %%, added ldx #0 to functions returning char
 ;removed sprid from c functions to speed them up
-
 
 
 
@@ -25,7 +28,7 @@
 	.export _set_vram_update,_flush_vram_update
 	.export _memcpy,_memfill,_delay
 	
-	.export _flush_vram_update_nmi, _oam_set, _oam_get
+	.export _flush_vram_update2, _oam_set, _oam_get
 
 
 
@@ -40,10 +43,17 @@ nmi:
 
 	lda <PPU_MASK_VAR	;if rendering is disabled, do not access the VRAM at all
 	and #%00011000
-	bne @doUpdate
+	bne @renderingOn
 	jmp	@skipAll
+	
+@renderingOn:	
+	lda <VRAM_UPDATE ;is the frame complete?
+	bne @doUpdate
+	jmp @skipAll ;skipUpd
 
 @doUpdate:
+	lda #0
+	sta <VRAM_UPDATE
 
 	lda #>OAM_BUF		;update OAM
 	sta PPU_OAM_DMA
@@ -91,16 +101,11 @@ nmi:
 	.endrepeat
 
 @updVRAM:
-
-	lda <VRAM_UPDATE
-	beq @skipUpd
-	lda #0
-	sta <VRAM_UPDATE
 	
 	lda <NAME_UPD_ENABLE
 	beq @skipUpd
 
-	jsr _flush_vram_update_nmi
+	jsr _flush_vram_update2
 
 @skipUpd:
 
@@ -1001,7 +1006,7 @@ _flush_vram_update:
 	sta <NAME_UPD_ADR+0
 	stx <NAME_UPD_ADR+1
 
-_flush_vram_update_nmi: ;minor changes %
+_flush_vram_update2: ;minor changes %
 
 	ldy #0
 
@@ -1066,7 +1071,13 @@ _flush_vram_update_nmi: ;minor changes %
 	jmp @updName
 
 @updDone:
-
+;changed to automatically clear these
+.ifdef VRAM_BUF
+	ldx #$ff
+	stx VRAM_BUF
+	inx ;x=0
+	stx VRAM_INDEX
+.endif
 	rts
 	
 	

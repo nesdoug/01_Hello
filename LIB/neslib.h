@@ -1,7 +1,7 @@
 //NES hardware-dependent functions by Shiru (shiru@mail.ru)
 //Feel free to do anything you want with this code, consider it Public Domain
 
-// nesdoug version, 2019-09
+// for nesdoug version 1.2, 1/1/2022
 // changes, removed sprid from oam functions, oam_spr 11% faster, meta 5% faster
 
 //Versions history:
@@ -11,7 +11,7 @@
 // 310814 - added vram_flush_update
 // 120414 - removed adr argument from vram_write and vram_read,
 //          unrle_vram renamed to vram_unrle, with adr argument removed
-// 060414 - many fixes and improvements, including sequental VRAM updates
+// 060414 - many fixes and improvements, including sequential VRAM updates
 // previous versions were created since mid-2011, there were many updates
 
 
@@ -168,7 +168,7 @@ unsigned char __fastcall__ pad_trigger(unsigned char pad);
 unsigned char __fastcall__ pad_state(unsigned char pad);
 
 
-//set scroll, including rhe top bits
+//set scroll, including the top bits
 //it is always applied at beginning of a TV frame, not at the function call
 
 void __fastcall__ scroll(unsigned int x,unsigned int y);
@@ -205,14 +205,14 @@ void __fastcall__ set_rand(unsigned int seed);
 
 //when display is enabled, vram access could only be done with this vram update system
 //the function sets a pointer to the update buffer that contains data and addresses
-//in a special format. It allows to write non-sequental bytes, as well as horizontal or
+//in a special format. It allows to write non-sequential bytes, as well as horizontal or
 //vertical nametable sequences.
 //buffer pointer could be changed during rendering, but it only takes effect on a new frame
 //number of transferred bytes is limited by vblank time
 //to disable updates, call this function with NULL pointer
 
 //the update data format:
-// MSB, LSB, byte for a non-sequental write
+// MSB, LSB, byte for a non-sequential write
 // MSB|NT_UPD_HORZ, LSB, LEN, [bytes] for a horizontal sequence
 // MSB|NT_UPD_VERT, LSB, LEN, [bytes] for a vertical sequence
 // NT_UPD_EOF to mark end of the buffer
@@ -220,14 +220,12 @@ void __fastcall__ set_rand(unsigned int seed);
 //length of this data should be under 256 bytes
 
 void __fastcall__ set_vram_update(const unsigned char *buf);
-//%% changed, added "const"
 
 //all following vram functions only work when display is disabled
 
 //do a series of VRAM writes, the same format as for set_vram_update, but writes done right away
 
 void __fastcall__ flush_vram_update(const unsigned char *buf);
-//%% changed, added "const"
 
 //set vram pointer to write operations if you need to write some data to vram
 
@@ -252,7 +250,6 @@ void __fastcall__ vram_read(unsigned char *dst,unsigned int size);
 //write a block to current address of vram, works only when rendering is turned off
 
 void __fastcall__ vram_write(const unsigned char *src,unsigned int size);
-//%% changed, added "const"
 
 //unpack RLE data to current address of vram, mostly used for nametables
 
