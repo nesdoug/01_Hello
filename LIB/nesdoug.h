@@ -1,5 +1,5 @@
 // Written by Doug Fraker
-// version 1.2, 1/1/2022
+// version 1.3, 10/31/2022
 
 // Why am I doing so much with a vram_buffer? This is an automated system, which
 // works when the screen is on. You can write to the buffer at any time. 
@@ -26,8 +26,8 @@ void __fastcall__ multi_vram_buffer_vert(const char * data, unsigned char len, i
 // to push multiple writes as one sequential vertical write to the vram_buffer
 
 
-// void clear_vram_buffer(void);
-// removed, it should clear itself
+void clear_vram_buffer(void);
+// resets the vram buffer, if you need to undo something, like for a scene change
 
 
 unsigned char __fastcall__ get_pad_new(unsigned char pad);
